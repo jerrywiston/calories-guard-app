@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+results/
+history/
+data/
+releases/
+node_modules/
+.test-tmp/
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+plugins/gallery-saver/android/build/
+ios/App/build/
+ios/App/Pods/

@@ -1,0 +1,19 @@
+{
+  "name": "餐盤小幫手",
+  "short_name": "餐盤小幫手",
+  "description": "依照片與備註估算每日熱量與營養成分。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f4ed",
+  "theme_color": "#f7f4ed",
+  "lang": "zh-Hant",
+  "icons": [
+    {
+      "src": "./app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

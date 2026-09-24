@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f7f4ed">
+    <meta name="description" content="依早餐、午餐、下午茶、晚餐與宵夜整理照片和備註，估算每日營養。">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>今日餐盤營養</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./app.bundle.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero" id="top">
+        <div class="hero-orb hero-orb-one" aria-hidden="true"></div>
+        <div class="hero-orb hero-orb-two" aria-hidden="true"></div>
+
+        <div class="brand-row">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" role="img">
+              <path d="M16 27c6.2 0 11-4.5 11-10.6C27 9 20.1 4.8 16 3 11.9 4.8 5 9 5 16.4 5 22.5 9.8 27 16 27Z" fill="currentColor" opacity=".16"/>
+              <path d="M16 24.5c0-7.5 3.2-12.3 7.7-15.3M16 24.5c0-5-2.5-8.2-6.1-10.4M16 17c2.7.1 4.8-.7 6.4-2.3M15.5 20.8c-2.1.1-3.9-.5-5.3-1.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="brand-name">餐盤小幫手</p>
+          <span class="ai-badge">AI 估算</span>
+          <button class="menu-button" id="nutrition-menu-button" type="button" aria-label="設定個人每日營養建議值">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg>
+          </button>
+        </div>
+
+        <p class="eyebrow">今天吃了什麼？</p>
+        <div class="hero-title-row">
+          <h1>記錄每一餐，<br><span>看懂一整天。</span></h1>
+          <div class="hero-nutrition-stack" aria-label="今日熱量與三大營養素" aria-live="polite">
+            <div class="top-calorie-circle" data-summary-nutrient="calories_kcal">
+              <span>今日熱量</span>
+              <strong id="top-total-calories">—</strong>
+              <small>kcal</small>
+            </div>
+            <div class="top-macro-row">
+              <div class="top-macro-circle macro-protein" data-summary-nutrient="protein_g">
+                <span>蛋白質</span>
+                <p><strong id="top-protein">—</strong><small>g</small></p>
+              </div>
+              <div class="top-macro-circle macro-carbs" data-summary-nutrient="carbs_g">
+                <span>碳水</span>
+                <p><strong id="top-carbs">—</strong><small>g</small></p>
+              </div>
+              <div class="top-macro-circle macro-fat" data-summary-nutrient="fat_g">
+                <span>脂肪</span>
+                <p><strong id="top-fat">—</strong><small>g</small></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="hero-copy">依餐次加入照片和份量備註，分餐整理品項，最後統整今日完整營養。</p>
+      </header>
+
+      <main>
+        <section class="composer" aria-labelledby="photo-heading">
+          <div class="section-heading">
+            <div>
+              <p class="step-label" id="active-date-label">今日紀錄</p>
+              <h2 id="photo-heading">安排今天的餐點</h2>
+            </div>
+            <div class="section-heading-actions">
+              <button class="return-today-button" id="return-today-button" type="button" hidden>回到今日</button>
+              <span class="photo-count" id="photo-count" aria-live="polite">0 / 15</span>
+            </div>
+          </div>
+
+          <input class="visually-hidden" id="camera-input" type="file" accept="image/*,.heic,.heif" capture="environment" tabindex="-1">
+          <input class="visually-hidden" id="gallery-input" type="file" accept="image/*,.heic,.heif" multiple tabindex="-1">
+          <div class="meal-sections" id="meal-sections" aria-label="早餐、午餐、下午茶、晚餐與宵夜照片"></div>
+
+          <div class="counting-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 10.5v6M12 7.5h.01"/>
+            </svg>
+            <p><strong>同一餐的照片與共用備註會一起分析。</strong>可只寫備註而不附照片；同一包裝食品的正面與營養標示可一起上傳，系統會合併為同一品項計算一次。</p>
+          </div>
+          <label class="settings-checkbox-row split-items-control" for="split-food-items">
+            <span><strong>拆分細項</strong><small>將組合餐拆成魚排、醬汁、飯、配菜與蛋等可辨識品項</small></span>
+            <input id="split-food-items" type="checkbox" checked>
+          </label>
+        </section>
+
+        <div class="error-panel" id="error-panel" role="alert" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7.5v5M12 16.5h.01"/>
+          </svg>
+          <div>
+            <strong>無法完成</strong>
+            <p id="error-message"></p>
+          </div>
+        </div>
+
+        <section class="progress-panel" id="progress-panel" aria-live="polite" hidden>
+          <div class="loader" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div>
+            <h2 id="progress-title">正在準備照片</h2>
+            <p id="progress-detail">請稍候一下</p>
+          </div>
+        </section>
+
+        <section class="results" id="results" aria-labelledby="results-heading" hidden>
+          <div class="results-intro">
+            <p class="step-label">分析完成</p>
+            <h2 id="results-heading">今日餐點分析</h2>
+            <p id="results-summary">已依餐次整理所有照片與備註</p>
+          </div>
+
+          <div class="detail-heading" hidden>
+            <div>
+              <p class="step-label">各餐小計</p>
+              <h3>餐次與營養品項</h3>
+            </div>
+            <span id="result-photo-count"></span>
+          </div>
+          <div class="meal-results" id="meal-results" hidden></div>
+
+          <section class="daily-summary" aria-labelledby="daily-heading">
+            <div class="daily-heading-row">
+              <div>
+                <p class="step-label">今日完整資訊</p>
+                <h3 id="daily-heading">
+                  今日營養總計
+                  <small id="daily-heading-date"></small>
+                </h3>
+              </div>
+              <span class="model-label" id="model-label"></span>
+            </div>
+            <div class="calorie-hero">
+              <div class="calorie-copy">
+                <span>今日總熱量</span>
+                <p><strong id="total-calories">—</strong><small>kcal</small></p>
+              </div>
+              <div class="plate-visual" aria-hidden="true">
+                <span class="plate-ring"></span>
+                <svg viewBox="0 0 64 64">
+                  <path d="M18 11v17c0 4 2.3 6.4 5.7 7.2V53M12 11v11M24 11v11M46 11c-4 5.6-4.8 14.1 1.5 17.2V53M18 11v11"/>
+                </svg>
+              </div>
+            </div>
+            <div class="nutrient-grid" id="nutrient-grid" aria-label="今日完整營養成分"></div>
+          </section>
+
+          <p class="estimate-disclaimer">結果依照片與備註推估；實際數值會受份量、品牌和烹調方式影響。</p>
+          <button class="secondary-button" id="new-analysis-button" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg>
+            回到今日
+          </button>
+        </section>
+      </main>
+
+      <footer>
+        <button class="back-to-top-button" id="back-to-top-button" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 14 6-6 6 6M12 8v10"/></svg>
+          移到頂部
+        </button>
+        <p>營養估算僅供日常飲食參考</p>
+      </footer>
+
+      <div class="sticky-action" id="sticky-action">
+        <div class="action-inner">
+          <div class="action-context" id="action-context" aria-live="polite">
+            <span>尚未加入照片</span>
+            <small>每餐最多 10 張，今日最多 30 張</small>
+          </div>
+          <div class="action-buttons">
+            <button class="export-button" id="export-image-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 18v2h14v-2"/></svg>
+              <span>匯出報告</span>
+            </button>
+            <button class="primary-button" id="calculate-button" type="button" disabled>
+              <span>計算熱量</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <dialog class="item-dialog" id="item-dialog" aria-labelledby="item-dialog-title">
+        <div class="dialog-handle" aria-hidden="true"></div>
+        <div class="dialog-heading">
+          <div>
+            <p class="step-label" id="item-dialog-meal"></p>
+            <h2 id="item-dialog-title">品項營養資訊</h2>
+          </div>
+          <button class="dialog-close" id="item-dialog-close" type="button" aria-label="關閉品項資訊">×</button>
+        </div>
+        <div id="item-dialog-content"></div>
+      </dialog>
+
+      <dialog class="photo-viewer-dialog" id="photo-viewer-dialog" aria-labelledby="photo-viewer-title">
+        <div class="photo-viewer-header">
+          <div>
+            <p>完整照片</p>
+            <h2 id="photo-viewer-title">照片預覽</h2>
+          </div>
+          <button class="photo-viewer-close" id="photo-viewer-close" type="button" aria-label="關閉完整照片">×</button>
+        </div>
+        <div class="photo-viewer-stage">
+          <img id="photo-viewer-image" alt="">
+        </div>
+        <div class="photo-viewer-footer">
+          <div class="photo-viewer-controls" aria-label="圖片縮放控制">
+            <button id="photo-viewer-zoom-out" type="button" aria-label="縮小圖片">−</button>
+            <button id="photo-viewer-zoom-reset" type="button" aria-label="重設圖片縮放">
+              <span id="photo-viewer-zoom-label">100%</span>
+            </button>
+            <button id="photo-viewer-zoom-in" type="button" aria-label="放大圖片">＋</button>
+          </div>
+          <p class="photo-viewer-help">單指拖曳查看，雙指縮放；也可使用下方按鈕。</p>
+        </div>
+      </dialog>
+
+      <dialog class="item-dialog export-complete-dialog" id="export-complete-dialog" aria-labelledby="export-complete-title">
+        <div class="dialog-handle" aria-hidden="true"></div>
+        <div class="dialog-heading">
+          <div>
+            <p class="step-label">圖片已產生</p>
+            <h2 id="export-complete-title">要現在打開照片嗎？</h2>
+          </div>
+        </div>
+        <p class="export-complete-copy" id="export-complete-copy">全天營養報告已準備完成。</p>
+        <div class="export-complete-actions">
+          <button id="export-complete-later" type="button">稍後</button>
+          <button id="export-complete-open" type="button">打開照片</button>
+        </div>
+      </dialog>
+
+      <dialog class="item-dialog export-dialog" id="export-dialog" aria-labelledby="export-dialog-title">
+        <div class="dialog-handle" aria-hidden="true"></div>
+        <div class="dialog-heading">
+          <div>
+            <p class="step-label">整天一張</p>
+            <h2 id="export-dialog-title">匯出全天營養報告</h2>
+          </div>
+          <button class="dialog-close" id="export-dialog-close" type="button" aria-label="關閉匯出選項">×</button>
+        </div>
+        <p class="export-dialog-copy">將全天總計與所有餐次整理成一張圖片；照片完整顯示，並維持足以辨識食物的尺寸。</p>
+        <div class="export-choice-actions">
+          <button class="export-choice-button export-choice-preview" id="preview-saved-report-button" type="button" hidden>
+            <span class="export-choice-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.7"/></svg>
+            </span>
+            <span><strong>預覽已產生報告</strong><small>重新打開這個日期上次匯出的圖片</small></span>
+          </button>
+          <button class="export-choice-button export-choice-save" id="save-gallery-button" type="button">
+            <span class="export-choice-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 15l2.8-3 2.2 2.2 1.8-2 3.2 3.8M9 9h.01"/></svg>
+            </span>
+            <span><strong>儲存全天報告</strong><small>手機存到相簿，網頁版下載單張 PNG</small></span>
+          </button>
+          <button class="export-choice-button" id="share-export-button" type="button">
+            <span class="export-choice-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.3 10.9 7.4-4.7M8.3 13.1l7.4 4.7"/></svg>
+            </span>
+            <span><strong>分享全天報告</strong><small>以一張圖片分享整天所有餐次</small></span>
+          </button>
+          <button class="export-choice-button export-choice-long" id="long-export-button" type="button">
+            <span class="export-choice-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M7 3h10v18H7zM10 7h4M10 11h4M10 15h4"/></svg>
+            </span>
+            <span><strong>完整頁面長截圖</strong><small>保留原本從上到下的完整頁面</small></span>
+          </button>
+        </div>
+      </dialog>
+
+      <dialog class="item-dialog settings-dialog" id="nutrition-settings-dialog" aria-labelledby="nutrition-settings-title">
+        <div class="dialog-handle" aria-hidden="true"></div>
+        <div class="dialog-heading">
+          <div>
+            <p class="step-label">個人設定</p>
+            <h2 id="nutrition-settings-title">App 與營養設定</h2>
+          </div>
+          <button class="dialog-close" id="nutrition-settings-close" type="button" aria-label="關閉營養建議設定">×</button>
+        </div>
+        <button class="settings-history-button" id="open-history-button" type="button">
+          <span class="settings-history-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5Z"/></svg>
+          </span>
+          <span><strong>日曆</strong><small id="history-record-count">選擇日期查看或新增紀錄</small></span>
+          <svg class="settings-history-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+        <form id="nutrition-settings-form">
+          <section class="connection-settings" aria-labelledby="connection-settings-title">
+            <div class="settings-section-heading">
+              <div>
+                <h3 id="connection-settings-title">Gemini 連線</h3>
+                <p>App 會直接連線 Gemini；金鑰只保存在這台裝置，不會寫進 APK 或程式碼。</p>
+              </div>
+              <span class="connection-status" id="connection-status">尚未設定</span>
+            </div>
+            <label class="settings-wide-field">
+              <span>Google AI Studio API key</span>
+              <span class="secret-input-row">
+                <input id="gemini-api-key" type="password" minlength="20" maxlength="500" autocomplete="off" spellcheck="false" required placeholder="貼上自己的 Gemini API key">
+                <button id="toggle-api-key" type="button" aria-label="顯示 API key">顯示</button>
+              </span>
+            </label>
+            <button class="api-key-guide-link" id="open-api-key-guide" type="button">如何取得 API Key</button>
+            <p class="connection-help">不需要填寫後端網址。App 或 GitHub Pages 網站會使用這把 key 直接呼叫 Google Gemini API。</p>
+          </section>
+          <section class="static-web-data" id="static-web-data" hidden aria-labelledby="static-web-data-title">
+            <div class="settings-section-heading">
+              <div>
+                <h3 id="static-web-data-title">網站資料備份</h3>
+                <p>歷史紀錄只保存在這個瀏覽器。清除網站資料或更換裝置前，請先下載 JSON 備份。</p>
+              </div>
+            </div>
+            <div class="static-backup-actions">
+              <button id="export-history-backup" type="button">下載備份</button>
+              <button id="import-history-backup" type="button">匯入備份</button>
+              <input id="history-backup-input" type="file" accept="application/json,.json" hidden>
+            </div>
+            <p class="static-storage-status" id="static-storage-status">備份不包含 API key 與已產生的報告圖片。</p>
+          </section>
+          <div class="settings-divider" aria-hidden="true"></div>
+          <p class="settings-intro">只填寫你想追蹤的營養項目；留白的項目不會顯示百分比與剩餘量。</p>
+          <div class="settings-grid">
+            <label><span>熱量 <small>kcal</small></span><input type="number" inputmode="decimal" min="0.1" max="100000" step="0.1" data-target-key="calories_kcal" placeholder="例如 2000"></label>
+            <label><span>蛋白質 <small>g</small></span><input type="number" inputmode="decimal" min="0.1" max="10000" step="0.1" data-target-key="protein_g" placeholder="例如 60"></label>
+            <label><span>脂肪 <small>g</small></span><input type="number" inputmode="decimal" min="0.1" max="10000" step="0.1" data-target-key="fat_g" placeholder="例如 55"></label>
+            <label><span>碳水化合物 <small>g</small></span><input type="number" inputmode="decimal" min="0.1" max="10000" step="0.1" data-target-key="carbs_g" placeholder="例如 250"></label>
+            <label><span>膳食纖維 <small>g</small></span><input type="number" inputmode="decimal" min="0.1" max="10000" step="0.1" data-target-key="fiber_g" placeholder="例如 25"></label>
+            <label><span>糖 <small>g</small></span><input type="number" inputmode="decimal" min="0.1" max="10000" step="0.1" data-target-key="sugar_g" placeholder="例如 50"></label>
+            <label><span>鈉 <small>mg</small></span><input type="number" inputmode="decimal" min="0.1" max="1000000" step="0.1" data-target-key="sodium_mg" placeholder="例如 2000"></label>
+          </div>
+          <div class="settings-actions">
+            <button class="settings-clear" id="nutrition-settings-clear" type="button">清除建議值</button>
+            <button class="settings-save" type="submit">儲存設定</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog class="item-dialog api-key-guide-dialog" id="api-key-guide-dialog" aria-labelledby="api-key-guide-title">
+        <div class="dialog-handle" aria-hidden="true"></div>
+        <div class="dialog-heading">
+          <div>
+            <p class="step-label">Gemini 連線教學</p>
+            <h2 id="api-key-guide-title">如何取得 API Key</h2>
+          </div>
+          <button class="dialog-close" id="api-key-guide-close" type="button" aria-label="關閉 API Key 教學">×</button>
+        </div>
+        <div class="api-key-warning" role="note">
+          <strong>請注意：這會消耗你自己 Google 帳號的 Token 預算</strong>
+          <p>每次分析都會使用所選 Google Cloud 專案的 Gemini API 配額；若專案已啟用付費方案，也可能產生費用。</p>
+        </div>
+        <ol class="api-key-guide-steps">
+          <li><strong>開啟 Google AI Studio</strong><span>使用你的 Google 帳號登入，並同意必要的服務條款。</span></li>
+          <li><strong>建立或選擇專案</strong><span>新使用者可能會自動取得預設專案。若沒有，請到 Dashboard 的 Projects 建立或匯入一個 Google Cloud 專案。</span></li>
+          <li><strong>建立 API Key</strong><span>進入 API Keys 頁面，按下 Create API key，選擇剛才的專案並完成建立。</span></li>
+          <li><strong>複製並貼回 App</strong><span>複製產生的金鑰，回到設定頁貼入「Google AI Studio API key」，再按下「儲存設定」。</span></li>
+          <li><strong>查看使用量</strong><span>可在 AI Studio 的 Dashboard → Usage 查看 Token 用量與配額。</span></li>
+        </ol>
+        <a class="api-key-studio-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">前往 Google AI Studio 建立 API Key</a>
+        <p class="api-key-security-note">請勿把 API Key 傳給他人、貼到公開網站或提交到公開程式碼儲存庫。</p>
+      </dialog>
+
+      <dialog class="item-dialog history-dialog" id="history-dialog" aria-labelledby="history-dialog-title">
+        <div class="dialog-handle" aria-hidden="true"></div>
+        <div class="dialog-heading">
+          <div>
+            <p class="step-label">每日紀錄</p>
+            <h2 id="history-dialog-title">飲食日曆</h2>
+          </div>
+          <button class="dialog-close" id="history-dialog-close" type="button" aria-label="關閉飲食日曆">×</button>
+        </div>
+        <div class="calendar-toolbar">
+          <button id="calendar-previous" type="button" aria-label="上一個月">‹</button>
+          <strong id="calendar-month-label"></strong>
+          <button id="calendar-next" type="button" aria-label="下一個月">›</button>
+        </div>
+        <div class="calendar-weekdays" aria-hidden="true">
+          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+        </div>
+        <div class="calendar-grid" id="calendar-grid" role="grid" aria-label="飲食紀錄日期"></div>
+        <p class="calendar-status" id="calendar-status">點選任一日期；有紀錄會載入，沒有紀錄會開啟空白頁。</p>
+      </dialog>
+    </div>
+  </body>
+</html>

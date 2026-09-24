@@ -1,0 +1,28 @@
+{
+  "name": "@calories-guard/gallery-saver",
+  "version": "1.0.0",
+  "description": "Capacitor plugin for saving generated nutrition record images to the device photo library.",
+  "main": "dist/esm/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "dist/",
+    "ios/Sources/",
+    "Package.swift"
+  ],
+  "peerDependencies": {
+    "@capacitor/core": ">=8.0.0"
+  },
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    },
+    "android": {
+      "src": "android"
+    }
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

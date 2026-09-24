@@ -1,0 +1,108 @@
+<div id="layout-lab">
+  <style>
+    #layout-lab{--ink:light-dark(#17382f,#eaf5f0);--muted:light-dark(#66766f,#aab9b3);--paper:light-dark(#f5f1e8,#18231f);--card:light-dark(#ffffff,#21302a);--line:light-dark(#d8ded9,#3d4d46);--green:light-dark(#174c3c,#b8e2d1);font-family:ui-sans-serif,system-ui,"Noto Sans TC",sans-serif;color:var(--ink)}
+    #layout-lab *{box-sizing:border-box}
+    #layout-lab .lab-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:12px}
+    #layout-lab .lab-head h2{margin:0;font-size:20px;font-weight:500}
+    #layout-lab .lab-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    #layout-lab .method-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+    #layout-lab .method-tabs button{appearance:none;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:7px 11px;font:inherit;font-size:13px;cursor:pointer}
+    #layout-lab .method-tabs button[aria-pressed="true"]{background:var(--green);color:light-dark(#fff,#15362c);border-color:transparent}
+    #layout-lab .method-note{min-height:42px;color:var(--muted);font-size:13px;line-height:1.45;margin-bottom:12px}
+    #layout-lab .samples{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    #layout-lab .sample{min-width:0}
+    #layout-lab .sample-title{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:7px}
+    #layout-lab .sample-title strong{font-size:14px;font-weight:500}
+    #layout-lab .sample-title span{font-size:11px;color:var(--muted)}
+    #layout-lab .report{position:relative;width:100%;aspect-ratio:0.72;background:var(--paper);border:1px solid var(--line);overflow:hidden;box-shadow:0 8px 22px color-mix(in srgb,var(--ink) 9%,transparent)}
+    #layout-lab .report-head{height:17%;padding:5% 6%;background:color-mix(in srgb,var(--green) 11%,var(--paper));position:relative}
+    #layout-lab .date{font-size:8px;color:var(--muted)}
+    #layout-lab .title{font-size:14px;font-weight:500;margin-top:2px}
+    #layout-lab .kcal{position:absolute;right:6%;top:18%;text-align:right;font-size:15px;font-weight:500}
+    #layout-lab .kcal small{display:block;font-size:7px;color:var(--muted);font-weight:400}
+    #layout-lab .stage{position:absolute;left:4%;right:4%;top:19%;bottom:4%}
+    #layout-lab .piece{position:absolute;border-radius:5px;overflow:hidden;background:var(--card);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--line) 75%,transparent)}
+    #layout-lab .piece.photo{display:flex;align-items:flex-end;padding:4px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 58%,#fff),color-mix(in srgb,var(--tone) 86%,#26342e));color:#fff;text-shadow:0 1px 2px #0008}
+    #layout-lab .piece.photo::before{content:attr(data-icon);position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(15px,3vw,28px);filter:saturate(.85);text-shadow:none}
+    #layout-lab .piece.photo span{position:relative;z-index:1;font-size:7px;font-weight:500;line-height:1.15}
+    #layout-lab .piece.text{padding:4px 5px;color:light-dark(#17382f,#eaf5f0);font-size:7px;line-height:1.25}
+    #layout-lab .piece.text b{display:block;font-size:8px;font-weight:500;margin-bottom:2px}
+    #layout-lab .piece.label{display:flex;align-items:center;padding:3px 5px;background:color-mix(in srgb,var(--tone) 18%,var(--card));font-size:7px;font-weight:500}
+    #layout-lab .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:7px}
+    #layout-lab .metric{font-size:10px;color:var(--muted)}
+    #layout-lab .metric b{display:block;color:var(--ink);font-size:12px;font-weight:500}
+    #layout-lab .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;color:var(--muted);font-size:11px}
+    #layout-lab .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+    @media(max-width:720px){#layout-lab .samples{grid-template-columns:1fr}#layout-lab .report{max-width:360px;margin:auto}#layout-lab .sample{margin-bottom:14px}}
+  </style>
+  <div class="lab-head">
+    <div><h2>報告排版方法比較</h2><p>同一組餐點內容，以六種方法各測試三種情境</p></div>
+  </div>
+  <div class="method-tabs" role="group" aria-label="排版方法"></div>
+  <div class="method-note" aria-live="polite"></div>
+  <div class="samples"></div>
+  <div class="legend"><span><i style="background:#d89b5b"></i>早餐</span><span><i style="background:#508d70"></i>午餐</span><span><i style="background:#9272b2"></i>下午茶</span><span><i style="background:#507eae"></i>晚餐</span><span><i style="background:#b46060"></i>宵夜</span></div>
+  <script>
+  (()=>{
+    const root=document.getElementById('layout-lab');
+    const methods=[
+      {id:'global',name:'全局網格',note:'所有餐次與照片一起搜尋位置；每張照片可獨立選擇網格寬高，空白率最低，但計算量最高。'},
+      {id:'poly',name:'多形狀 Polyomino',note:'每餐可用矩形、L、T、階梯形；保留清楚的餐次區域，也能利用凹槽。'},
+      {id:'tree',name:'Treemap',note:'依品項數分配餐次面積，再在區域內放照片；填滿率最高，但閱讀方向與照片比例較不自然。'},
+      {id:'cut',name:'Guillotine 切割',note:'反覆水平或垂直切割整張報告；版面整齊、速度快，遇到極端長寬比時會留下局部空間。'},
+      {id:'photo',name:'照片優先',note:'照片先填滿版面，餐名與品項覆蓋在照片下緣；高度最短，但文字會壓在照片上。'},
+      {id:'multi',name:'多版候選',note:'同時產生全局網格、Polyomino、切割與照片優先版本，再依空白、清晰度和順序選出最佳版。'}
+    ];
+    const scenarios=[
+      {id:'balanced',name:'樣本 A｜五餐平均',sub:'7 張照片／18 品項'},
+      {id:'main',name:'樣本 B｜主餐很重',sub:'午餐 9 品項／早餐僅飲料'},
+      {id:'dense',name:'樣本 C｜照片密集',sub:'12 張照片／4 餐'}
+    ];
+    const meals={b:{name:'早餐',tone:'#d89b5b',icon:'🥪'},l:{name:'午餐',tone:'#508d70',icon:'🍛'},t:{name:'下午茶',tone:'#9272b2',icon:'🥤'},d:{name:'晚餐',tone:'#507eae',icon:'🍲'},n:{name:'宵夜',tone:'#b46060',icon:'🍜'}};
+    const R=(x,y,w,h,m,kind='photo',label='')=>({x,y,w,h,m,kind,label});
+    const sets={
+      global:{
+        balanced:[R(0,0,30,31,'b'),R(31,0,45,49,'l'),R(77,0,23,24,'t'),R(77,25,23,24,'t','text'),R(0,32,30,28,'d'),R(31,50,45,29,'d'),R(77,50,23,29,'n'),R(0,61,30,18,'b','text')],
+        main:[R(0,0,22,24,'b'),R(23,0,55,52,'l'),R(79,0,21,25,'t'),R(0,25,22,27,'b','text'),R(79,26,21,26,'t','text'),R(0,53,38,27,'d'),R(39,53,39,27,'d'),R(79,53,21,27,'n')],
+        dense:[R(0,0,25,27,'b'),R(26,0,25,27,'b'),R(52,0,48,38,'l'),R(0,28,25,26,'t'),R(26,28,25,26,'t'),R(52,39,23,35,'l'),R(76,39,24,35,'d'),R(0,55,25,25,'d'),R(26,55,25,25,'d')]
+      },
+      poly:{
+        balanced:[R(0,0,56,28,'b'),R(0,29,25,22,'b','text'),R(57,0,43,45,'l'),R(26,29,30,22,'t'),R(0,52,49,28,'d'),R(50,46,50,34,'n')],
+        main:[R(0,0,24,25,'b'),R(25,0,75,46,'l'),R(0,26,24,20,'b','text'),R(0,47,49,33,'d'),R(50,47,25,33,'t'),R(76,47,24,33,'n')],
+        dense:[R(0,0,50,27,'b'),R(51,0,49,37,'l'),R(0,28,24,25,'b'),R(25,28,25,25,'t'),R(51,38,24,42,'l'),R(76,38,24,42,'d'),R(0,54,50,26,'d')]
+      },
+      tree:{
+        balanced:[R(0,0,28,45,'b'),R(28,0,45,45,'l'),R(73,0,27,45,'t'),R(0,45,43,35,'d'),R(43,45,57,35,'n')],
+        main:[R(0,0,19,80,'b'),R(19,0,52,80,'l'),R(71,0,13,80,'t'),R(84,0,16,49,'d'),R(84,49,16,31,'n')],
+        dense:[R(0,0,31,40,'b'),R(31,0,43,40,'l'),R(74,0,26,40,'t'),R(0,40,22,40,'b'),R(22,40,31,40,'l'),R(53,40,25,40,'d'),R(78,40,22,40,'d')]
+      },
+      cut:{
+        balanced:[R(0,0,37,34,'b'),R(38,0,62,34,'l'),R(0,35,30,45,'t'),R(31,35,39,45,'d'),R(71,35,29,45,'n')],
+        main:[R(0,0,25,29,'b'),R(26,0,74,53,'l'),R(0,30,25,50,'t'),R(26,54,45,26,'d'),R(72,54,28,26,'n')],
+        dense:[R(0,0,49,26,'b'),R(50,0,50,26,'b'),R(0,27,65,28,'l'),R(66,27,34,28,'t'),R(0,56,33,24,'d'),R(34,56,33,24,'d'),R(68,56,32,24,'d')]
+      },
+      photo:{
+        balanced:[R(0,0,31,40,'b'),R(32,0,44,40,'l'),R(77,0,23,40,'t'),R(0,41,45,39,'d'),R(46,41,54,39,'n')],
+        main:[R(0,0,18,80,'b'),R(19,0,57,80,'l'),R(77,0,23,35,'t'),R(77,36,23,28,'d'),R(77,65,23,15,'n')],
+        dense:[R(0,0,25,39,'b'),R(26,0,25,39,'b'),R(52,0,48,39,'l'),R(0,40,22,40,'t'),R(23,40,28,40,'l'),R(52,40,24,40,'d'),R(77,40,23,40,'d')]
+      },
+      multi:{
+        balanced:[R(0,0,56,28,'b'),R(0,29,25,22,'b','text'),R(57,0,43,45,'l'),R(26,29,30,22,'t'),R(0,52,49,28,'d'),R(50,46,50,34,'n')],
+        main:[R(0,0,18,80,'b'),R(19,0,57,80,'l'),R(77,0,23,35,'t'),R(77,36,23,28,'d'),R(77,65,23,15,'n')],
+        dense:[R(0,0,49,26,'b'),R(50,0,50,26,'b'),R(0,27,65,28,'l'),R(66,27,34,28,'t'),R(0,56,33,24,'d'),R(34,56,33,24,'d'),R(68,56,32,24,'d')]
+      }
+    };
+    let active='global';
+    const tabs=root.querySelector('.method-tabs'),samples=root.querySelector('.samples'),note=root.querySelector('.method-note');
+    methods.forEach(method=>{const b=document.createElement('button');b.type='button';b.textContent=method.name;b.dataset.id=method.id;b.setAttribute('aria-pressed',method.id===active);b.addEventListener('click',()=>{active=method.id;render()});tabs.appendChild(b)});
+    function metrics(blocks){const fill=Math.min(100,Math.round(blocks.reduce((s,b)=>s+b.w*b.h,0)/80));const largest=Math.round(Math.max(...blocks.filter(b=>b.kind==='photo').map(b=>b.w*b.h))/80);return {fill,blank:100-fill,largest}}
+    function render(){
+      tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.id===active));
+      note.textContent=methods.find(m=>m.id===active).note;samples.replaceChildren();
+      scenarios.forEach(sc=>{const blocks=sets[active][sc.id],m=metrics(blocks);const wrap=document.createElement('section');wrap.className='sample';wrap.innerHTML=`<div class="sample-title"><strong>${sc.name}</strong><span>${sc.sub}</span></div><div class="report"><div class="report-head"><div class="date">2026.09.23</div><div class="title">今日營養報告</div><div class="kcal">1,846<small>kcal</small></div></div><div class="stage"></div></div><div class="metrics"><div class="metric"><b>${m.fill}%</b>版面填滿率</div><div class="metric"><b>${m.blank}%</b>剩餘空白</div><div class="metric"><b>${m.largest}%</b>最大照片占比</div></div>`;
+        const stage=wrap.querySelector('.stage');blocks.forEach((b,i)=>{const meal=meals[b.m],el=document.createElement('div');el.className=`piece ${b.kind}`;el.style.cssText=`left:${b.x}%;top:${b.y}%;width:${b.w}%;height:${b.h}%;--tone:${meal.tone}`;if(b.kind==='photo'){el.dataset.icon=meal.icon;el.innerHTML=`<span>${meal.name}${active==='photo'?'｜'+(['主餐','飲料','點心'][i%3]):''}</span>`}else{el.innerHTML=`<b>${meal.name}</b>${b.m==='l'?'魚排・咖哩・飯・蛋':'品項與營養摘要'}`;}stage.appendChild(el)});samples.appendChild(wrap)});
+    }
+    render();
+  })();
+  </script>
+</div>
