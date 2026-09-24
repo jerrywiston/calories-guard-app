@@ -21,6 +21,7 @@ const jpegBytes = Buffer.from([0xff, 0xd8, 0xff, 0xd9]);
 function food(overrides = {}) {
   return {
     name: '白飯',
+    portion_description: '',
     estimated_weight_g: 100,
     calories_kcal: 130,
     protein_g: 2.4,

@@ -792,6 +792,41 @@ export function compactItemLines(context, items, width) {
   return lines;
 }
 
+const NOTE_PORTION_AMOUNT = String.raw`(?:[一二兩三四五六七八九十百千零〇\d]+\s*分之\s*[一二兩三四五六七八九十百千零〇\d]+|\d+\s*\/\s*\d+|[¼½¾⅓⅔⅛⅜⅝⅞]|\d+(?:\.\d+)?|[一二兩三四五六七八九十百千零〇半]+)`;
+const NOTE_PORTION_UNIT = String.raw`(?:g|kg|ml|l|克|公克|公斤|毫升|公升|碗|杯|份|條|根|顆|粒|片|塊|匙|茶匙|湯匙|罐|瓶|包|盒|個|球|串)`;
+const NOTE_PORTION = `${NOTE_PORTION_AMOUNT}\\s*${NOTE_PORTION_UNIT}`;
+
+export function noteHasPortionInformation(note) {
+  return new RegExp(NOTE_PORTION, "iu").test(String(note || ""));
+}
+
+export function portionFromNoteForItem(itemName, note) {
+  const name = String(itemName || "").trim();
+  if (!name) return "";
+  const clauses = String(note || "").split(/[，,、；;。\n]/u);
+  for (const clause of clauses) {
+    const nameIndex = clause.indexOf(name);
+    if (nameIndex < 0) continue;
+    const beforeName = clause.slice(0, nameIndex);
+    const afterName = clause.slice(nameIndex + name.length);
+    const afterMatch = afterName.match(new RegExp(`^[\\s:：為約大概共吃了]*(?<portion>${NOTE_PORTION})`, "iu"));
+    if (afterMatch?.groups?.portion) return afterMatch.groups.portion.replace(/\s+/gu, " ").trim();
+    const beforeMatch = beforeName.match(new RegExp(`(?<portion>${NOTE_PORTION})\\s*(?:的)?\\s*$`, "iu"));
+    if (beforeMatch?.groups?.portion) return beforeMatch.groups.portion.replace(/\s+/gu, " ").trim();
+  }
+  return "";
+}
+
+export function reportItemsWithPortions(items, note = "") {
+  const source = Array.isArray(items) ? items : [];
+  return source.map(item => {
+    const name = item?.name || "未命名品項";
+    const structuredPortion = typeof item?.portion_description === "string" ? item.portion_description.trim() : "";
+    const portion = structuredPortion || portionFromNoteForItem(name, note);
+    return { ...item, name: portion ? `${name}（${portion}）` : name };
+  });
+}
+
 function drawCompactItems(context, lines, x, y, width) {
   context.textAlign = "left";
   context.fillStyle = "#18342c";
@@ -866,7 +901,8 @@ async function prepareDailyMeal(mealData) {
     return reportCropAspectRatio(imageWidth, imageHeight, cropBoxes[index]);
   });
   decodedPhotos.forEach(releaseDecodedPhoto);
-  const items = Array.isArray(mealData.meal?.items) ? mealData.meal.items : [];
+  const analysisItems = Array.isArray(mealData.meal?.items) ? mealData.meal.items : [];
+  const items = reportItemsWithPortions(analysisItems, mealData.meal?.note);
   const foodPhotoCount = mealData.entries.filter(entry => {
     const role = entry.resultPhoto?.role || entry.resultPhoto?.analysis?.photo_role;
     return role === "food" || role === "mixed";
@@ -877,9 +913,9 @@ async function prepareDailyMeal(mealData) {
     const role = entry.resultPhoto?.role || entry.resultPhoto?.analysis?.photo_role;
     if (role === "product_front" || role === "nutrition_label") return 1;
     if ((role === "food" || role === "mixed") && foodPhotoCount > 0) {
-      return Math.max(1, Math.ceil(items.length / foodPhotoCount));
+      return Math.max(1, Math.ceil(analysisItems.length / foodPhotoCount));
     }
-    return mealData.entries.length === 1 ? Math.max(1, items.length) : 1;
+    return mealData.entries.length === 1 ? Math.max(1, analysisItems.length) : 1;
   });
   return { ...mealData, aspectRatios, cropBoxes, items, itemCounts };
 }

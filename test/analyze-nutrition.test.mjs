@@ -17,7 +17,7 @@ const apiKey = 'offline-test-key-never-use-for-network';
 
 function item(overrides = {}) {
   return {
-    name: '白飯', estimated_weight_g: 150, calories_kcal: 195,
+    name: '白飯', portion_description: '', estimated_weight_g: 150, calories_kcal: 195,
     protein_g: 4.1, fat_g: 0.4, carbs_g: 43, fiber_g: 0.6,
     sugar_g: 0.1, sodium_mg: 2, confidence: 'medium',
     assumptions: ['熟重約 150 公克'], ...overrides,
@@ -131,6 +131,7 @@ test('sends image bytes, paired annotation and prompt; writes JSON and Markdown 
     assert.equal(request.generationConfig.responseMimeType, 'application/json');
     assert.deepEqual(request.generationConfig.responseJsonSchema, RESPONSE_SCHEMA);
     assert.equal(RESPONSE_SCHEMA.properties.items.items.properties.sodium_mg.type, 'number');
+    assert.equal(RESPONSE_SCHEMA.properties.items.items.properties.portion_description.type, 'string');
     assert.equal(RESPONSE_SCHEMA.properties.report_crop_box.properties.right.maximum, 1000);
     assert.ok(RESPONSE_SCHEMA.required.includes('report_crop_box'));
     return { ok: true, status: 200, json: async () => responsePayload(value) };

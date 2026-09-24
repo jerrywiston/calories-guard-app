@@ -44,6 +44,7 @@ const photoAssessment = {
 };
 const itemProperties = {
   name: { type: "string" },
+  portion_description: { type: "string" },
   estimated_weight_g: nonnegativeNumber,
   ...Object.fromEntries(NUTRIENT_KEYS.map(key => [key, nonnegativeNumber])),
   confidence: { type: "string", enum: ["high", "medium", "low"] },
@@ -66,7 +67,7 @@ export const RESPONSE_SCHEMA = {
   required: ["is_food", "meal_name", "items", "uncertainty_notes", "report_crop_box", "photo_assessments"],
 };
 
-const SYSTEM_INSTRUCTION = "你是餐點營養估算助手。依同一餐的所有照片與共用文字說明分析，以繁體中文填寫指定 JSON。數字均為該餐實際吃下份量的總營養量。同一個包裝食品的正面、營養成分標示或不同角度只代表一個品項，必須合併資訊且只能計算一次；營養成分標示優先作為數值依據，一般商品照用來辨識品名與包裝。實物食物缺少精確資料時，必須依畫面份量與常見食材做合理估算，並在 assumptions 或 uncertainty_notes 說明不確定性。若包裝營養標示沒有列出或無法讀到膳食纖維、糖或其他必填營養項目，必須依產品類型、配料、份量與常見同類食品合理估算，並在 assumptions 說明；不得僅因標示缺項就填 0。只有標示明確寫為 0，或依食品性質可合理判定幾乎不含該成分時才填 0。所有 estimated_weight_g 與營養欄位都必須是非負數字，不得輸出 null 或留白。沒有照片時必須依共用文字說明合理估算。不要捏造資料來源。若照片與文字都無法辨識餐點，is_food 設為 false、items 為空陣列並在 uncertainty_notes 說明。photo_assessments 必須依輸入照片順序逐張回傳且 photo_index 從 0 開始；visible_item_count 是該張照片中可辨識的不同食物或飲料品項數，一盤同時有飯、魚排、蛋與配菜就依實際品項計數，單一零食或飲料填 1，純營養標示若只對應一個商品也填 1，不可使用整餐照片總數代替。role 判斷為 food、product_front、nutrition_label、mixed 或 other，其中只要畫面主體是營養成分標示就使用 nutrition_label，不以照片是否為包裝背面判斷；同一包裝品的商品照與營養標示照必須使用完全相同且具體的 subject_identity，不確定時使用「無法確認」。include_in_report 用來決定報告是否顯示該照片：同一品項同時有一般商品照與營養成分標示照時，一般商品照設為 true、營養標示照設為 false；若該品項只有營養標示照而沒有一般商品照，營養標示照必須設為 true；不同品項不得互相排除。一般食物照片設為 true。每張照片的 report_crop_box 是供報告排版使用的建議裁切框，座標以原圖左上角為原點並正規化為 0 到 1000；裁切框必須涵蓋所有食物、飲料、份量參照，以及包裝正面或重要標示，只移除明顯無關背景。若無法安全裁切，回傳完整範圍並將 confidence 設為 low。最外層 report_crop_box 在有照片時使用第 0 張照片的裁切框，沒有照片時使用完整範圍且 confidence 設為 low。";
+const SYSTEM_INSTRUCTION = "你是餐點營養估算助手。依同一餐的所有照片與共用文字說明分析，以繁體中文填寫指定 JSON。數字均為該餐實際吃下份量的總營養量。每個 item 的 portion_description 必須保留共用餐次備註中明確寫出的該品項份量，例如「一條」、「半碗」、「四分之一碗」、「150 公克」、「兩顆」；不要擅自把估計重量改寫成使用者說過的份量，備註未提供明確份量時填空字串。同一個包裝食品的正面、營養成分標示或不同角度只代表一個品項，必須合併資訊且只能計算一次；營養成分標示優先作為數值依據，一般商品照用來辨識品名與包裝。實物食物缺少精確資料時，必須依畫面份量與常見食材做合理估算，並在 assumptions 或 uncertainty_notes 說明不確定性。若包裝營養標示沒有列出或無法讀到膳食纖維、糖或其他必填營養項目，必須依產品類型、配料、份量與常見同類食品合理估算，並在 assumptions 說明；不得僅因標示缺項就填 0。只有標示明確寫為 0，或依食品性質可合理判定幾乎不含該成分時才填 0。所有 estimated_weight_g 與營養欄位都必須是非負數字，不得輸出 null 或留白。沒有照片時必須依共用文字說明合理估算。不要捏造資料來源。若照片與文字都無法辨識餐點，is_food 設為 false、items 為空陣列並在 uncertainty_notes 說明。photo_assessments 必須依輸入照片順序逐張回傳且 photo_index 從 0 開始；visible_item_count 是該張照片中可辨識的不同食物或飲料品項數，一盤同時有飯、魚排、蛋與配菜就依實際品項計數，單一零食或飲料填 1，純營養標示若只對應一個商品也填 1，不可使用整餐照片總數代替。role 判斷為 food、product_front、nutrition_label、mixed 或 other，其中只要畫面主體是營養成分標示就使用 nutrition_label，不以照片是否為包裝背面判斷；同一包裝品的商品照與營養標示照必須使用完全相同且具體的 subject_identity，不確定時使用「無法確認」。include_in_report 用來決定報告是否顯示該照片：同一品項同時有一般商品照與營養成分標示照時，一般商品照設為 true、營養標示照設為 false；若該品項只有營養標示照而沒有一般商品照，營養標示照必須設為 true；不同品項不得互相排除。一般食物照片設為 true。每張照片的 report_crop_box 是供報告排版使用的建議裁切框，座標以原圖左上角為原點並正規化為 0 到 1000；裁切框必須涵蓋所有食物、飲料、份量參照，以及包裝正面或重要標示，只移除明顯無關背景。若無法安全裁切，回傳完整範圍並將 confidence 設為 low。最外層 report_crop_box 在有照片時使用第 0 張照片的裁切框，沒有照片時使用完整範圍且 confidence 設為 low。";
 const memoryCache = new Map();
 const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
@@ -148,7 +149,7 @@ export function validateAnalysis(value) {
     }
   }
   for (const item of value.items) {
-    if (!item || !isText(item.name) || !["high", "medium", "low"].includes(item.confidence)
+    if (!item || !isText(item.name) || typeof item.portion_description !== "string" || !["high", "medium", "low"].includes(item.confidence)
       || !isTextList(item.assumptions)) {
       throw new Error("Gemini 回傳的食物名稱、信心程度或假設格式錯誤。");
     }
@@ -315,7 +316,7 @@ async function sha256(text) {
 
 export async function createAnalysisFingerprint(images, { prompt, mealType, mealNote, splitItems = true, models = [PRIMARY_MODEL, FALLBACK_MODEL] }) {
   return sha256(JSON.stringify({
-    version: 5,
+    version: 7,
     prompt,
     models,
     mealType,

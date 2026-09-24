@@ -8,6 +8,7 @@ function analysis(name = "烤雞胸", photoCount = 1) {
     meal_name: "雞胸餐",
     items: [{
       name,
+      portion_description: "",
       estimated_weight_g: 120,
       calories_kcal: 198,
       protein_g: 37,
@@ -85,6 +86,7 @@ test("手機分析直接以標頭呼叫 Gemini 並統整餐次", async () => {
   assert.match(requests[0].data.contents[0].parts.at(-1).text, /用餐時段：午餐/);
   assert.match(requests[0].data.contents[0].parts.at(-1).text, /細項拆分已開啟/);
   assert.match(requests[0].data.systemInstruction.parts[0].text, /不得僅因標示缺項就填 0/);
+  assert.match(requests[0].data.systemInstruction.parts[0].text, /portion_description/);
   assert.ok(requests[0].data.generationConfig.responseJsonSchema.required.includes("report_crop_box"));
   assert.match(requests[0].data.systemInstruction.parts[0].text, /只移除明顯無關背景/);
   assert.equal(result.meals[0].label, "午餐");

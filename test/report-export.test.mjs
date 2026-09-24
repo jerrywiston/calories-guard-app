@@ -14,6 +14,7 @@ import {
   photoAreaWeight,
   reportCropAspectRatio,
   reportPixelDimensions,
+  reportItemsWithPortions,
   reportTargetStatus,
   skylineMealLayout,
 } from "../public/report-export.js";
@@ -52,6 +53,34 @@ test("報告完整列出所有品項且長名稱換行而不省略", () => {
   for (const item of items) assert.ok(rendered.includes(item.name));
   assert.equal(rendered.includes("另有"), false);
   assert.equal(rendered.includes("…"), false);
+});
+
+test("報告把備註中的結構化份量附在對應品項名稱後", () => {
+  const items = reportItemsWithPortions([
+    { name: "香蕉", portion_description: "一條" },
+    { name: "白飯", portion_description: "半碗" },
+    { name: "荷包蛋", portion_description: "" },
+  ], "香蕉一條、白飯半碗");
+  assert.deepEqual(items.map(item => item.name), ["香蕉（一條）", "白飯（半碗）", "荷包蛋"]);
+});
+
+test("舊紀錄會把備註份量直接附在對應品項後且不新增備註品項", () => {
+  const items = reportItemsWithPortions([{ name: "香蕉" }, { name: "白飯" }], "香蕉一條、白飯半碗");
+  assert.deepEqual(items.map(item => item.name), ["香蕉（一條）", "白飯（半碗）"]);
+  for (const [note, portion] of [
+    ["白飯四分之一碗", "四分之一碗"],
+    ["白飯三分之二碗", "三分之二碗"],
+    ["白飯 1/4 碗", "1/4 碗"],
+    ["白飯 0.25 碗", "0.25 碗"],
+    ["白飯 ¼ 碗", "¼ 碗"],
+    ["四分之一碗的白飯", "四分之一碗"],
+  ]) {
+    assert.equal(reportItemsWithPortions([{ name: "白飯" }], note)[0].name, `白飯（${portion}）`);
+  }
+  assert.deepEqual(
+    reportItemsWithPortions([{ name: "咖哩飯" }, { name: "味噌湯" }], "白飯半碗、少油，不加辣").map(item => item.name),
+    ["咖哩飯", "味噌湯"],
+  );
 });
 
 function intersects(first, second) {

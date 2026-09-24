@@ -1,4 +1,4 @@
-const CACHE_NAME = "calories-guard-shell-2026-09-24-2";
+const CACHE_NAME = "calories-guard-shell-2026-09-24-5";
 const APP_SHELL = ["./", "./index.html", "./styles.css", "./app.bundle.js", "./manifest.webmanifest", "./app-icon.svg"];
 
 self.addEventListener("install", event => {
